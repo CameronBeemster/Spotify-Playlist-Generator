@@ -19,18 +19,6 @@ token = util.prompt_for_user_token(username, scope, client_id=client_id, client_
 
 sp = spotipy.Spotify(auth=token)
 
-class spotipyFix(spotipy.Spotify):
-     def current_user_saved_tracks_contains(self, tracks=None):
-        """ Check if one or more tracks is already saved in
-            the current Spotify user’s “Your Music” library.
-            Parameters:
-                - tracks - a list of track URIs, URLs or IDs
-        """
-        tlist = []
-        if tracks is not None:
-            tlist = [self._get_id('track', t) for t in tracks]
-        return self._get('me/tracks/contains?ids=' + ','.join(tlist))
-
 def authenticate():
     print("Connecting to Spotify...")
     x = spotipy.Spotify(auth=token)
@@ -46,7 +34,7 @@ def getTopArtists():
     ranges = ['short_term', 'medium_term', 'long_term']
     print('Getting your top artists...')
     for rang in ranges:
-        all_data = auth.current_user_top_artists(limit=25, time_range= rang)
+        all_data = auth.current_user_top_artists(limit=10, time_range= rang)
         data = all_data['items']
         for artist in data:
             if artist['name'] not in topArtists:
@@ -54,6 +42,22 @@ def getTopArtists():
                 topArtistURI.append(artist['uri'])
     # print(json.dumps(topArtists + topArtistURI, indent = 2))
     return topArtistURI
+
+def userPromptArtist(topArtistURI):
+    artist_names = []
+    for artist in topArtistURI:
+        artist_data = sp.artist(artist)
+        name = artist_data['name']
+        artist_names.append(name)
+        print(name)
+    correct_artist = False
+    while correct_artist == False:
+        selected_artist = input('\nSelect an Artist: ')
+        if selected_artist not in artist_names:
+            print('\nInvalid artist name...')
+        else:
+            correct_artist = True
+    print(selected_artist)
 
 def getTopArtistTracks(topArtistURI, sp):
     topArtistTracks = []
@@ -71,11 +75,12 @@ def getTopArtistTracks(topArtistURI, sp):
 
 def generateTopArtistUnsavedList(track_list):
     topArtistUnsavedList = []
-    for track in track_list:
-        x = sp.current_user_saved_tracks_contains(tracks=track)
+    for track in track_list[:10]:
+        x = sp.current_user_saved_tracks_contains(tracks=track[14:])
+        print(x)
         if not x:
-            topArtistUnsavedList.append(track)
-        return topArtistUnsavedList  
+            topArtistUnsavedList.append(track[14:])
+    return topArtistUnsavedList  
 
 def create_playlist(sp, selected_tracks):
     user = sp.current_user()
@@ -92,13 +97,15 @@ def create_playlist(sp, selected_tracks):
     sp.user_playlist_add_tracks(user_id, playlist_id, track_list[0:100])
 
 top = getTopArtists()
+userPromptArtist(top)
 
 # uri = ['spotify:track:3Ol2xnObFdKV9pmRD2t9x8']
 # checkAgainstSavedTracks(uri)
 
 
-selected_tracks = getTopArtistTracks(top, sp)
-create_playlist(sp, selected_tracks)
+# selected_tracks = getTopArtistTracks(top, sp)
+# generateTopArtistUnsavedList(selected_tracks)
+# create_playlist(sp, selected_tracks)
 
 # def function that finds genre reccommendations based off an artist's genre
 #   recommendation_genre_seeds()
