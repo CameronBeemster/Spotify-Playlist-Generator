@@ -442,6 +442,19 @@ class Spotify(object):
         return self._put("users/%s/playlists/%s" % (user, playlist_id),
                          payload=data)
 
+    #Created by Cameron A Beemster 3/11
+    def changePlaylistArtwork(
+        self, user, playlist_id, artwork):
+        """ Changes a playlist's artwork
+
+            Parameters:
+                - user - the id of the user
+                - playlist_id - the id of the playlist
+                - artworkURL - the url from artist data
+        """
+        return self._put("users/%s/playlists/%s/images" % (user, playlist_id), payload=artwork)
+        # https://api.spotify.com/v1/users/{user_id}/playlists/{playlist_id}/images
+
     def user_playlist_unfollow(self, user, playlist_id):
         """ Unfollows (deletes) a playlist for a user
 
@@ -820,8 +833,8 @@ class Spotify(object):
         """
         params = dict(limit=limit)
         if seed_artists:
-            params['seed_artists'] = ','.join(
-                [self._get_id('artist', a) for a in seed_artists])
+            params['seed_artists'] = ''.join(
+                [self._get_id('artist', a) for a in seed_artists]) #Edited 3/8
         if seed_genres:
             params['seed_genres'] = ','.join(seed_genres)
         if seed_tracks:
