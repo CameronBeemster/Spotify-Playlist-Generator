@@ -4,21 +4,21 @@
 
 import spotipy
 import spotipy.util as util
-import json
 import random
 import datetime
 import urllib.request
 import base64
+import requests
 
 client_id = '6ee5977e1f83455180575e4b754f4048'
 client_secret = '8193de873e1444229508d5964936c028'
 redirect_uri = 'https://dummy.com/'
 
 url = 'https://accounts.spotify.com/authorize'
-scope = 'user-library-read user-top-read playlist-modify-public user-follow-read ugc-image-upload'
+scope = 'user-library-read user-top-read playlist-modify-public user-follow-read' # ugc-image-upload'
 username = '' #enter username here
 
-print("Connecting to Spotify...")
+print("Connecting to Spotify...\n")
 token = util.prompt_for_user_token(username, scope, client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri)
 sp = spotipy.Spotify(auth=token)
 
@@ -26,7 +26,7 @@ def getTopArtists():
     topArtists = []
     topArtistsURI = []
     ranges = ['short_term', 'medium_term', 'long_term']
-    print('Getting your top artists...')
+    print('Getting your top artists...\n')
     for rang in ranges:
         all_data = sp.current_user_top_artists(limit=10, time_range= rang)
         data = all_data['items']
@@ -64,12 +64,11 @@ def getRelatedArtists(selected_artist):
         uri = artist['uri']
         name = artist['name']
         relatedArtistURI[name] = uri
-    print(json.dumps(relatedArtistURI, indent=2))
     return relatedArtistURI
 
 def getTopTracks(artistList):
     topArtistTracks = {}
-    print('Aggregating your top artists\' tracks...')
+    print('Aggregating your top artists\' tracks...\n')
     for artist, key in artistList.items():
         top_tracks_all_data = sp.artist_top_tracks(key)
         top_tracks = top_tracks_all_data['tracks']
@@ -86,10 +85,10 @@ def getTopTracks(artistList):
                 break
             else:
                 print("You already have " + name + " by " + artist + " saved!")            
-    print(json.dumps(topArtistTracks, indent=2))
-    print(len(topArtistTracks))
     return topArtistTracks
 
+'''
+# Spotify API is universally buggy when trying to add a custom image
 def getArtistArtwork(artist): 
     for key in artist.values():
         artistKey = key
@@ -97,12 +96,12 @@ def getArtistArtwork(artist):
     image = artistData['images'][0]
     artworkURL = image['url']
     print(artworkURL)
-    urllib.request.urlretrieve(artworkURL, "playlistArtwork.jpeg")
-    with open("playlistArtwork.jpeg", "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read())
-    return encoded_string
+    # urllib.request.urlretrieve(artworkURL, "playlistArtwork.jpeg")
+    # with open("playlistArtwork.jpeg", "rb") as image_file:
+    #     encoded_string = base64.b64encode(image_file.read())
+    return artworkURL '''
 
-def createPlaylist(selected_tracks, artist): #, encodedPhoto):
+def createPlaylist(selected_tracks, artist):#,artworkURL):  # <- Spotify API is universally buggy when trying to add a custom image
     user = sp.current_user()
     userID = user['id']
 
@@ -114,7 +113,7 @@ def createPlaylist(selected_tracks, artist): #, encodedPhoto):
 
     playlistName = name + " playlist (created on " + str(datetime.datetime.today().strftime('%m/%d')) + ")"
 
-    print('Creating playlist...')
+    print('Creating playlist...\n')
     playlist = sp.user_playlist_create(userID, playlistName)
     playlistID = playlist['id']
 
@@ -125,16 +124,20 @@ def createPlaylist(selected_tracks, artist): #, encodedPhoto):
     random.shuffle(track_list)
     print('Adding songs...\n')
     sp.user_playlist_add_tracks(userID, playlistID, track_list)
-    # print('Adding flair...\n')
-    # sp.changePlaylistArtwork(userID, playlistID, encodedPhoto)
+
+    '''
+    #Spotify API is universally buggy when trying to add a custom image
+    print('Adding image...\n')
+    r = requests.put('https://api.spotify.com/v1/users/' + username + '/playlists/' + playlistID + '/images', data = artworkURL)
+    print(r.status_code) '''
     
 top = getTopArtists()
 selectedArtist = userPromptArtist(top)
-# topArtistArtwork = getArtistArtwork(selectedArtist)
+#topArtistArtwork = getArtistArtwork(selectedArtist) # <- Spotify API is universally buggy when trying to add a custom image
 related = getRelatedArtists(selectedArtist)
 
 playlistTracks = getTopTracks(selectedArtist)
 relatedTracks = getTopTracks(related)
 playlistTracks.update(relatedTracks)
 
-createPlaylist(playlistTracks, selectedArtist) #, topArtistArtwork)
+createPlaylist(playlistTracks, selectedArtist)#, topArtistArtwork) # <- Spotify API is universally buggy when trying to add a custom image
