@@ -8,9 +8,9 @@ import spotipy
 import spotipy.util as util
 import random
 import datetime
-# import urllib.request
-# import base64
-# import requests
+#import urllib.request
+#import base64
+#import requests
 
 client_id = '6ee5977e1f83455180575e4b754f4048'
 client_secret = '8193de873e1444229508d5964936c028'
